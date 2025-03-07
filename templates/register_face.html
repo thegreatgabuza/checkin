@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+
+{% block title %}Facial Recognition Registration{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #1a73e8;
+        color: white;
+    }
+    
+    .register-container {
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 30px;
+        background-color: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        text-align: center;
+    }
+    
+    h1 {
+        margin-bottom: 30px;
+    }
+    
+    .camera-container {
+        position: relative;
+        max-width: 500px;
+        margin: 0 auto 30px;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    #video {
+        width: 100%;
+        height: auto;
+        display: block;
+        transform: scaleX(-1); /* Mirror image */
+    }
+    
+    .face-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 220px;
+        height: 220px;
+        border: 2px dashed rgba(255, 255, 255, 0.7);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+    
+    .camera-controls {
+        margin: 20px 0;
+    }
+    
+    .form-container {
+        max-width: 400px;
+        margin: 30px auto;
+        text-align: left;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    
+    input {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+    
+    input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    button {
+        padding: 12px 25px;
+        background-color: #4285f4;
+        border: none;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    button:hover {
+        background-color: #5c9aff;
+    }
+    
+    button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+    
+    .capture-status {
+        margin-top: 15px;
+        font-weight: bold;
+    }
+    
+    .captured-images {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }
+    
+    .captured-thumb {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 5px;
+        border: 2px solid white;
+    }
+    
+    .registration-steps {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+    }
+    
+    .step {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        position: relative;
+    }
+    
+    .step.active {
+        font-weight: bold;
+        color: #90caf9;
+    }
+    
+    .step::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 0;
+        width: 100%;
+        height: 2px;
+        background-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-50%);
+        z-index: -1;
+    }
+    
+    .step:last-child::after {
+        display: none;
+    }
+    
+    .step-number {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        line-height: 30px;
+        margin-bottom: 5px;
+    }
+    
+    .step.active .step-number {
+        background-color: #4285f4;
+    }
+    
+    .step.completed .step-number {
+        background-color: #0f9d58;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-container">
+    <h1>Facial Recognition Registration</h1>
+    
+    <div class="registration-steps">
+        <div class="step active">
+            <div class="step-number">1</div>
+            <div class="step-label">Capture Face</div>
+        </div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-label">Enter Details</div>
+        </div>
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-label">Complete</div>
+        </div>
+    </div>
+    
+    <div id="step-1">
+        <p>Please position your face within the circle and capture multiple angles</p>
+        
+        <div class="camera-container">
+            <video id="video" autoplay playsinline></video>
+            <div class="face-overlay"></div>
+        </div>
+        
+        <div class="camera-controls">
+            <button id="capture-btn">Capture Image</button>
+            <button id="next-btn" disabled>Next Step</button>
+        </div>
+        
+        <div class="capture-status" id="capture-status">
+            <span>Captured: <span id="capture-count">0</span>/5 images</span>
+        </div>
+        
+        <div class="captured-images" id="captured-images"></div>
+    </div>
+    
+    <div id="step-2" style="display: none;">
+        <form id="registration-form">
+            <div class="form-container">
+                <div class="form-group">
+                    <label for="first-name">First Name</label>
+                    <input type="text" id="first-name" name="first_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="last-name">Last Name</label>
+                    <input type="text" id="last-name" name="last_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="student-id">Student ID</label>
+                    <input type="text" id="student-id" name="student_id" required>
+                </div>
+                
+                <button type="submit" id="register-btn">Complete Registration</button>
+            </div>
+        </form>
+    </div>
+    
+    <div id="step-3" style="display: none;">
+        <div class="success-message">
+            <h2>Registration Successful!</h2>
+            <p>Your face has been registered successfully.</p>
+            <p>You can now use facial recognition to check in.</p>
+            
+            <button onclick="location.href='/'">Return to Home</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const video = document.getElementById('video');
+        const captureBtn = document.getElementById('capture-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const captureCount = document.getElementById('capture-count');
+        const capturedImages = document.getElementById('captured-images');
+        const registrationForm = document.getElementById('registration-form');
+        
+        const step1 = document.getElementById('step-1');
+        const step2 = document.getElementById('step-2');
+        const step3 = document.getElementById('step-3');
+        
+        const steps = document.querySelectorAll('.step');
+        
+        let capturedPhotos = [];
+        let stream = null;
+        
+        // Initialize webcam
+        async function initCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 500, height: 400 } 
+                });
+                video.srcObject = stream;
+            } catch (err) {
+                console.error('Error accessing camera:', err);
+                alert('Could not access camera. Please ensure you have given permission and have a working camera.');
+            }
+        }
+        
+        initCamera();
+        
+        // Capture photo
+        captureBtn.addEventListener('click', function() {
+            if (capturedPhotos.length >= 5) {
+                alert('You have already captured the maximum number of photos.');
+                return;
+            }
+            
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Flip the image horizontally
+            context.translate(canvas.width, 0);
+            context.scale(-1, 1);
+            
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to data URL
+            const imageDataUrl = canvas.toDataURL('image/jpeg');
+            capturedPhotos.push(imageDataUrl);
+            
+            // Create thumbnail
+            const thumbnail = document.createElement('img');
+            thumbnail.src = imageDataUrl;
+            thumbnail.className = 'captured-thumb';
+            capturedImages.appendChild(thumbnail);
+            
+            // Update count
+            captureCount.textContent = capturedPhotos.length;
+            
+            // Enable next button when enough photos are captured
+            if (capturedPhotos.length >= 3) {
+                nextBtn.disabled = false;
+            }
+        });
+        
+        // Next step button
+        nextBtn.addEventListener('click', function() {
+            step1.style.display = 'none';
+            step2.style.display = 'block';
+            
+            steps[0].classList.remove('active');
+            steps[0].classList.add('completed');
+            steps[1].classList.add('active');
+            
+            // Stop the camera stream
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+        
+        // Form submission
+        registrationForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // In a real application, you would send the data to the server here
+            const formData = new FormData(registrationForm);
+            
+            // Add images to form data
+            capturedPhotos.forEach((photo, index) => {
+                // Convert base64 to blob
+                const byteString = atob(photo.split(',')[1]);
+                const mimeString = photo.split(',')[0].split(':')[1].split(';')[0];
+                const arrayBuffer = new ArrayBuffer(byteString.length);
+                const intArray = new Uint8Array(arrayBuffer);
+                
+                for (let i = 0; i < byteString.length; i++) {
+                    intArray[i] = byteString.charCodeAt(i);
+                }
+                
+                const blob = new Blob([arrayBuffer], {type: mimeString});
+                formData.append(`face_image_${index}`, blob, `face_${index}.jpg`);
+            });
+            
+            // Simulate API call to register face with LandingAI
+            try {
+                // In a real application, you would send formData to your API endpoint
+                /*
+                const response = await fetch('/auth/register_face', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status !== 'success') {
+                    throw new Error(result.message || 'Registration failed');
+                }
+                */
+                
+                // For demo purposes, we'll just simulate success
+                setTimeout(() => {
+                    step2.style.display = 'none';
+                    step3.style.display = 'block';
+                    
+                    steps[1].classList.remove('active');
+                    steps[1].classList.add('completed');
+                    steps[2].classList.add('active');
+                    steps[2].classList.add('completed');
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error registering:', error);
+                alert('Registration failed: ' + error.message);
+            }
+        });
+    });
+</script>
+{% endblock %} 

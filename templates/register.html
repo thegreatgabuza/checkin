@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #1a73e8;
+        color: white;
+    }
+    
+    .register-container {
+        max-width: 900px;
+        margin: 50px auto;
+        padding: 30px;
+        background-color: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    h1 {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .registration-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .option-card {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .option-card:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-5px);
+    }
+    
+    .option-icon {
+        font-size: 3rem;
+        margin-bottom: 15px;
+    }
+    
+    .option-title {
+        font-weight: bold;
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+    }
+    
+    .option-description {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-container">
+    <h1>Register for Student Check-in</h1>
+    
+    <p class="text-center mb-4">Choose your preferred registration method:</p>
+    
+    <div class="registration-options">
+        <div class="option-card" onclick="location.href='/auth/register_face'">
+            <div class="option-icon">😊</div>
+            <div class="option-title">Facial Recognition</div>
+            <div class="option-description">Register using your facial features for quick authentication</div>
+            <small>Uses LandingAI technology</small>
+        </div>
+        
+        <div class="option-card" onclick="location.href='/auth/register_fingerprint'">
+            <div class="option-icon">👆</div>
+            <div class="option-title">Fingerprint</div>
+            <div class="option-description">Use your fingerprint for secure and fast check-in</div>
+            <small>Requires fingerprint hardware</small>
+        </div>
+        
+        <div class="option-card" onclick="location.href='/auth/register_rfid'">
+            <div class="option-icon">💳</div>
+            <div class="option-title">RFID Card</div>
+            <div class="option-description">Register your student ID card or RFID tag</div>
+            <small>Most convenient option</small>
+        </div>
+        
+        <div class="option-card" onclick="location.href='/auth/register_voice'">
+            <div class="option-icon">🎤</div>
+            <div class="option-title">Voice Recognition</div>
+            <div class="option-description">Register your voice for hands-free authentication</div>
+            <small>Requires microphone access</small>
+        </div>
+        
+        <div class="option-card" onclick="location.href='/auth/register_manual'">
+            <div class="option-icon">✏️</div>
+            <div class="option-title">Manual Registration</div>
+            <div class="option-description">Manually enter your details for traditional registration</div>
+            <small>Fallback option</small>
+        </div>
+    </div>
+</div>
+{% endblock %} 

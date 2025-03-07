@@ -1,0 +1,505 @@
+{% extends "base.html" %}
+
+{% block title %}Voice Recognition Registration{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #1a73e8;
+        color: white;
+    }
+    
+    .register-container {
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 30px;
+        background-color: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        text-align: center;
+    }
+    
+    h1 {
+        margin-bottom: 30px;
+    }
+    
+    .voice-container {
+        max-width: 500px;
+        margin: 0 auto 30px;
+        padding: 20px;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+    }
+    
+    .microphone-animation {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 20px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .microphone-icon {
+        font-size: 3rem;
+    }
+    
+    .recording-rings {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 2px solid #4285f4;
+        opacity: 0;
+        transform: scale(1);
+    }
+    
+    .recording .recording-rings {
+        animation: recording-pulse 2s infinite;
+    }
+    
+    @keyframes recording-pulse {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        100% {
+            transform: scale(1.5);
+            opacity: 0;
+        }
+    }
+    
+    .voice-controls {
+        margin: 20px 0;
+    }
+    
+    .phrase-container {
+        margin: 30px auto;
+        max-width: 450px;
+    }
+    
+    .phrase-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .phrase-item {
+        padding: 15px;
+        margin-bottom: 10px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .phrase-item.completed {
+        background-color: rgba(15, 157, 88, 0.3);
+    }
+    
+    .phrase-item.active {
+        background-color: rgba(66, 133, 244, 0.3);
+        border-left: 4px solid #4285f4;
+    }
+    
+    .form-container {
+        max-width: 400px;
+        margin: 30px auto;
+        text-align: left;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    
+    input {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+    
+    button {
+        padding: 12px 25px;
+        background-color: #4285f4;
+        border: none;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    button:hover {
+        background-color: #5c9aff;
+    }
+    
+    button:disabled {
+        background-color: #ccc;
+        cursor: not-allowed;
+    }
+    
+    .transcript {
+        font-style: italic;
+        margin-top: 10px;
+        min-height: 50px;
+        opacity: 0.8;
+    }
+    
+    .audio-clips {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }
+    
+    .audio-clip {
+        display: flex;
+        align-items: center;
+        background-color: rgba(255, 255, 255, 0.1);
+        padding: 8px 15px;
+        border-radius: 20px;
+    }
+    
+    .registration-steps {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+    }
+    
+    .step {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        position: relative;
+    }
+    
+    .step.active {
+        font-weight: bold;
+        color: #90caf9;
+    }
+    
+    .step::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 0;
+        width: 100%;
+        height: 2px;
+        background-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-50%);
+        z-index: -1;
+    }
+    
+    .step:last-child::after {
+        display: none;
+    }
+    
+    .step-number {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        line-height: 30px;
+        margin-bottom: 5px;
+    }
+    
+    .step.active .step-number {
+        background-color: #4285f4;
+    }
+    
+    .step.completed .step-number {
+        background-color: #0f9d58;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-container">
+    <h1>Voice Recognition Registration</h1>
+    
+    <div class="registration-steps">
+        <div class="step active">
+            <div class="step-number">1</div>
+            <div class="step-label">Record Voice</div>
+        </div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-label">Enter Details</div>
+        </div>
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-label">Complete</div>
+        </div>
+    </div>
+    
+    <div id="step-1">
+        <p>Please read each phrase aloud when prompted</p>
+        
+        <div class="voice-container">
+            <div class="microphone-animation" id="mic-animation">
+                <div class="recording-rings"></div>
+                <div class="microphone-icon">🎤</div>
+            </div>
+            
+            <div class="transcript" id="transcript"></div>
+            
+            <div class="voice-controls">
+                <button id="record-btn">Start Recording</button>
+                <button id="next-btn" disabled>Next Step</button>
+            </div>
+        </div>
+        
+        <div class="phrase-container">
+            <p>Please read the following phrases:</p>
+            <ul class="phrase-list" id="phrase-list">
+                <li class="phrase-item active" data-index="0">My name is [Your Name]</li>
+                <li class="phrase-item" data-index="1">I am a student at [Your School]</li>
+                <li class="phrase-item" data-index="2">My student ID is [Your ID Number]</li>
+                <li class="phrase-item" data-index="3">Please register my voice for check-in</li>
+                <li class="phrase-item" data-index="4">I authorize the system to verify my identity</li>
+            </ul>
+        </div>
+        
+        <div class="audio-clips" id="audio-clips"></div>
+    </div>
+    
+    <div id="step-2" style="display: none;">
+        <form id="registration-form">
+            <div class="form-container">
+                <div class="form-group">
+                    <label for="first-name">First Name</label>
+                    <input type="text" id="first-name" name="first_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="last-name">Last Name</label>
+                    <input type="text" id="last-name" name="last_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="student-id">Student ID</label>
+                    <input type="text" id="student-id" name="student_id" required>
+                </div>
+                
+                <button type="submit" id="register-btn">Complete Registration</button>
+            </div>
+        </form>
+    </div>
+    
+    <div id="step-3" style="display: none;">
+        <div class="success-message">
+            <h2>Registration Successful!</h2>
+            <p>Your voice has been registered successfully.</p>
+            <p>You can now use voice recognition to check in.</p>
+            
+            <button onclick="location.href='/'">Return to Home</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const recordBtn = document.getElementById('record-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const micAnimation = document.getElementById('mic-animation');
+        const transcript = document.getElementById('transcript');
+        const phraseList = document.getElementById('phrase-list');
+        const phraseItems = document.querySelectorAll('.phrase-item');
+        const audioClips = document.getElementById('audio-clips');
+        const registrationForm = document.getElementById('registration-form');
+        
+        const step1 = document.getElementById('step-1');
+        const step2 = document.getElementById('step-2');
+        const step3 = document.getElementById('step-3');
+        
+        const steps = document.querySelectorAll('.step');
+        
+        let currentPhraseIndex = 0;
+        let recordedAudioClips = [];
+        let isRecording = false;
+        let recognition = null;
+        
+        // Check for SpeechRecognition API support
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            
+            recognition.onresult = function(event) {
+                const result = event.results[0];
+                const transcriptText = result[0].transcript;
+                transcript.textContent = transcriptText;
+                
+                if (result.isFinal) {
+                    // Store the transcript with the phrase
+                    const currentPhrase = phraseItems[currentPhraseIndex].textContent;
+                    recordedAudioClips.push({
+                        phrase: currentPhrase,
+                        transcript: transcriptText
+                    });
+                    
+                    // Mark current phrase as completed
+                    phraseItems[currentPhraseIndex].classList.remove('active');
+                    phraseItems[currentPhraseIndex].classList.add('completed');
+                    
+                    // Create audio clip display
+                    const audioClip = document.createElement('div');
+                    audioClip.className = 'audio-clip';
+                    audioClip.innerHTML = `<span>Phrase ${currentPhraseIndex + 1}</span>`;
+                    audioClips.appendChild(audioClip);
+                    
+                    // Move to next phrase
+                    currentPhraseIndex++;
+                    
+                    if (currentPhraseIndex < phraseItems.length) {
+                        phraseItems[currentPhraseIndex].classList.add('active');
+                    } else {
+                        // All phrases complete
+                        nextBtn.disabled = false;
+                        recordBtn.disabled = true;
+                        transcript.textContent = "All phrases recorded! Click 'Next Step' to continue.";
+                    }
+                    
+                    // Stop recording
+                    if (isRecording) {
+                        stopRecording();
+                    }
+                }
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Speech recognition error:', event.error);
+                transcript.textContent = `Error: ${event.error}. Please try again.`;
+                
+                if (isRecording) {
+                    stopRecording();
+                }
+            };
+            
+            recognition.onend = function() {
+                if (isRecording) {
+                    stopRecording();
+                }
+            };
+            
+        } else {
+            recordBtn.disabled = true;
+            transcript.textContent = "Speech recognition is not supported in your browser. Please use Chrome or Edge.";
+        }
+        
+        function startRecording() {
+            if (!recognition) return;
+            
+            try {
+                recognition.start();
+                isRecording = true;
+                recordBtn.textContent = "Stop Recording";
+                micAnimation.classList.add('recording');
+                transcript.textContent = "Listening...";
+            } catch (err) {
+                console.error('Error starting recognition:', err);
+            }
+        }
+        
+        function stopRecording() {
+            if (!recognition) return;
+            
+            try {
+                recognition.stop();
+                isRecording = false;
+                recordBtn.textContent = "Start Recording";
+                micAnimation.classList.remove('recording');
+            } catch (err) {
+                console.error('Error stopping recognition:', err);
+            }
+        }
+        
+        // Record button click
+        recordBtn.addEventListener('click', function() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+        
+        // Next step button
+        nextBtn.addEventListener('click', function() {
+            step1.style.display = 'none';
+            step2.style.display = 'block';
+            
+            steps[0].classList.remove('active');
+            steps[0].classList.add('completed');
+            steps[1].classList.add('active');
+        });
+        
+        // Form submission
+        registrationForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // In a real application, you would send the data to the server here
+            const formData = new FormData(registrationForm);
+            
+            // Add voice data
+            formData.append('voice_data', JSON.stringify(recordedAudioClips));
+            
+            // Simulate API call
+            try {
+                // In a real application, you would send formData to your API endpoint
+                /*
+                const response = await fetch('/auth/register_voice', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status !== 'success') {
+                    throw new Error(result.message || 'Registration failed');
+                }
+                */
+                
+                // For demo purposes, we'll just simulate success
+                setTimeout(() => {
+                    step2.style.display = 'none';
+                    step3.style.display = 'block';
+                    
+                    steps[1].classList.remove('active');
+                    steps[1].classList.add('completed');
+                    steps[2].classList.add('active');
+                    steps[2].classList.add('completed');
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error registering:', error);
+                alert('Registration failed: ' + error.message);
+            }
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}Manual Registration{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #1a73e8;
+        color: white;
+    }
+    
+    .register-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 30px;
+        background-color: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    h1 {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .form-container {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    
+    input {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        font-size: 1rem;
+    }
+    
+    input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-top: 20px;
+        background-color: #4285f4;
+        border: none;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    button:hover {
+        background-color: #5c9aff;
+    }
+    
+    .error-message {
+        color: #ff8a80;
+        font-size: 0.85rem;
+        margin-top: 5px;
+    }
+    
+    .success-message {
+        display: none;
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .registration-steps {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 30px;
+    }
+    
+    .step {
+        flex: 0 0 auto;
+        width: 120px;
+        text-align: center;
+        padding: 10px;
+        position: relative;
+    }
+    
+    .step.active {
+        font-weight: bold;
+        color: #90caf9;
+    }
+    
+    .step::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        right: 0;
+        width: 100%;
+        height: 2px;
+        background-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-50%);
+        z-index: -1;
+    }
+    
+    .step:last-child::after {
+        display: none;
+    }
+    
+    .step-number {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        line-height: 30px;
+        margin-bottom: 5px;
+    }
+    
+    .step.active .step-number {
+        background-color: #4285f4;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-container">
+    <h1>Manual Registration</h1>
+    
+    <div class="registration-steps">
+        <div class="step active">
+            <div class="step-number">1</div>
+            <div class="step-label">Enter Details</div>
+        </div>
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-label">Complete</div>
+        </div>
+    </div>
+    
+    <div id="registration-form">
+        <div class="form-container">
+            <form id="manual-form" class="validate">
+                <div class="form-group">
+                    <label for="first-name">First Name</label>
+                    <input type="text" id="first-name" name="first_name" placeholder="Enter your first name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="last-name">Last Name</label>
+                    <input type="text" id="last-name" name="last_name" placeholder="Enter your last name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email address" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="student-id">Student ID</label>
+                    <input type="text" id="student-id" name="student_id" placeholder="Enter your student ID number" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="date-of-birth">Date of Birth</label>
+                    <input type="date" id="date-of-birth" name="date_of_birth" required>
+                </div>
+                
+                <button type="submit">Register</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="success" class="success-message">
+        <h2>Registration Successful!</h2>
+        <p>Your account has been created successfully.</p>
+        <p>You can now use your student ID to check in.</p>
+        
+        <button onclick="location.href='/'">Return to Home</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('manual-form');
+        const registrationForm = document.getElementById('registration-form');
+        const successMessage = document.getElementById('success');
+        const steps = document.querySelectorAll('.step');
+        
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Validate form
+            const inputs = form.querySelectorAll('input[required]');
+            let isValid = true;
+            
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    isValid = false;
+                    // Add error styling
+                    input.style.borderColor = '#ff8a80';
+                    
+                    // Add error message if it doesn't exist
+                    let errorMessage = input.nextElementSibling;
+                    if (!errorMessage || !errorMessage.classList.contains('error-message')) {
+                        errorMessage = document.createElement('div');
+                        errorMessage.className = 'error-message';
+                        errorMessage.textContent = 'This field is required';
+                        input.parentNode.insertBefore(errorMessage, input.nextSibling);
+                    }
+                } else {
+                    // Remove error styling
+                    input.style.borderColor = '';
+                    
+                    // Remove error message if exists
+                    const errorMessage = input.nextElementSibling;
+                    if (errorMessage && errorMessage.classList.contains('error-message')) {
+                        errorMessage.remove();
+                    }
+                }
+            });
+            
+            if (!isValid) {
+                return;
+            }
+            
+            // In a real application, you would send this data to your server
+            // For demo purposes, we'll simulate a successful registration
+            
+            // Collect form data
+            const formData = new FormData(form);
+            const userData = Object.fromEntries(formData.entries());
+            
+            // Simulate API call
+            try {
+                // This would be a fetch call to your API endpoint in a real app
+                /*
+                const response = await fetch('/auth/register_manual', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.status !== 'success') {
+                    throw new Error(result.message || 'Registration failed');
+                }
+                */
+                
+                // For demo purposes, we'll just simulate success after a delay
+                setTimeout(() => {
+                    // Update steps
+                    steps[0].classList.remove('active');
+                    steps[1].classList.add('active');
+                    
+                    // Show success message
+                    registrationForm.style.display = 'none';
+                    successMessage.style.display = 'block';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error registering:', error);
+                alert('Registration failed: ' + error.message);
+            }
+        });
+        
+        // Add input event listeners to clear errors as user types
+        const inputs = form.querySelectorAll('input');
+        
+        inputs.forEach(input => {
+            input.addEventListener('input', function() {
+                // Remove error styling
+                input.style.borderColor = '';
+                
+                // Remove error message if exists
+                const errorMessage = input.nextElementSibling;
+                if (errorMessage && errorMessage.classList.contains('error-message')) {
+                    errorMessage.remove();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %} 
