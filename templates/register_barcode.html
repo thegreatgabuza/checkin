@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Manual Registration{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: #1a73e8;
+        color: white;
+    }
+    
+    .register-container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 30px;
+        background-color: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    h1 {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .form-container {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    
+    input {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        font-size: 1rem;
+    }
+    
+    input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    button {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        margin-top: 20px;
+        background-color: #4285f4;
+        border: none;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    button:hover {
+        background-color: #5c9aff;
+    }
+    
+    #extra-fields {
+        display: none;
+    }
+
+    .message-box {
+        display: none;
+        text-align: center;
+        font-weight: bold;
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .error {
+        background-color: #ff4c4c;
+        color: white;
+    }
+    
+    .success {
+        background-color: #28a745;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="register-container">
+    <h1>Manual Registration</h1>
+    <p style="text-align: center;">Please scan your student card barcode or enter your Student ID manually.</p>
+    
+    <div id="message" class="message-box"></div>
+
+    <div id="registration-form">
+        <div class="form-container">
+            <form id="manual-form" class="validate">
+                <div class="form-group">
+                    <label for="student-id">Student ID</label>
+                    <input type="text" id="student-id" name="student_id" maxlength="8" placeholder="Scan or enter your Student ID" required>
+                </div>
+
+                <div id="extra-fields">
+                    <div class="form-group">
+                        <label for="first-name">First Name</label>
+                        <input type="text" id="first-name" name="first_name" placeholder="Enter your first name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="last-name">Last Name</label>
+                        <input type="text" id="last-name" name="last_name" placeholder="Enter your last name" required>
+                    </div>
+                    
+                    <div class="form-group" style="display: none;">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" readonly>
+                    </div>
+                    
+                    <button type="submit">Register</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function showMessage(message, type) {
+        const messageBox = document.getElementById('message');
+        messageBox.textContent = message;
+        messageBox.className = `message-box ${type}`;
+        messageBox.style.display = 'block';
+        setTimeout(() => { messageBox.style.display = 'none'; }, 3000);
+    }
+
+    document.getElementById('student-id').addEventListener('input', function() {
+        const studentId = this.value.trim();
+        const extraFields = document.getElementById('extra-fields');
+        const studentIdPattern = /^2\d{7}$/; // Must start with 2 and be 8 digits
+    
+        if (studentIdPattern.test(studentId)) {
+            fetch('/auth/check_student_id', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ student_id: studentId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'exists') {
+                    showMessage("This student is already registered.", "error");
+                    extraFields.style.display = 'none';
+                } else {
+                    document.getElementById('email').value = `${studentId}@dut4life.ac.za`;
+                    extraFields.style.display = 'block';
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        } else {
+            extraFields.style.display = 'none';
+        }
+    });
+    
+    // Handle form submission
+    document.getElementById('manual-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+    
+        const formData = new FormData(this);
+        fetch('/auth/register_barcode', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showMessage("Registration successful!", "success");
+                this.reset();
+            } else {
+                showMessage(data.message, "error");
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+</script>
+{% endblock %}

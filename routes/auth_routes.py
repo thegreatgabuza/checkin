@@ -26,6 +26,65 @@ def register_manual():
             return jsonify({"status": "error", "message": str(e)})
     return render_template('register_manual.html')
 
+@auth_blueprint.route('/check_student_id', methods=['POST'])
+def check_student_id():
+    try:
+        data = request.json
+        student_id = data.get('student_id')
+
+        if not student_id or not student_id.startswith('2') or len(student_id) != 8:
+            return jsonify({"status": "error", "message": "Invalid Student ID"})
+
+        # Check if student already exists in Firestore
+        user_ref = db.collection('users').document(student_id).get()
+        if user_ref.exists:
+            return jsonify({"status": "exists", "message": "Student already registered"})
+
+        return jsonify({"status": "not_found", "message": "Student ID not found, proceed with registration."})
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+
+@auth_blueprint.route('/register_barcode', methods=['GET', 'POST'])
+def register_barcode():
+    if request.method == 'POST':
+        try:
+            data = request.form.to_dict()
+            student_id = data.get('student_id')
+
+            if not student_id or not student_id.startswith('2') or len(student_id) != 8:
+                return jsonify({"status": "error", "message": "Invalid Student ID"})
+
+            # Check if student already exists
+            user_ref = db.collection('users').document(student_id).get()
+            if user_ref.exists:
+                return jsonify({"status": "exists", "message": "Student already registered"})
+
+            # If student does not exist, ask for additional info
+            first_name = data.get('first_name')
+            last_name = data.get('last_name')
+
+            if not first_name or not last_name:
+                return jsonify({"status": "need_more_info", "message": "Please provide first name and last name."})
+
+            # Save new student to Firestore
+            db.collection('users').document(student_id).set({
+                'first_name': first_name,
+                'last_name': last_name,
+                'email': f"{student_id}@dut4life.ac.za",
+                'student_id': student_id,
+                'registration_method': 'barcode',
+                'timestamp': firestore.SERVER_TIMESTAMP
+            })
+            print(f"Saving student {student_id} to Firestore")
+            return jsonify({"status": "success", "message": "User registered successfully"})
+        
+        except Exception as e:
+            return jsonify({"status": "error", "message": str(e)})
+
+    return render_template('register_barcode.html')
+
 @auth_blueprint.route('/register_face', methods=['GET', 'POST'])
 def register_face():
     if request.method == 'POST':

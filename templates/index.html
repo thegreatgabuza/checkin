@@ -129,10 +129,17 @@
     <p>Place your student card on the scanner or choose another registration method below</p>
     
     <div class="registration-options">
+
         <div class="option-card" onclick="location.href='/auth/register_face'">
             <div class="option-icon">😊</div>
             <div class="option-title">Face Recognition</div>
             <div class="option-desc">Register with your face</div>
+        </div>
+
+        <div class="option-card" onclick="location.href='/auth/register_barcode'">
+            <div class="option-icon">📇</div>
+            <div class="option-title">Card Barcode</div>
+            <div class="option-desc">Register with your student card barcode</div>
         </div>
         
         <div class="option-card" onclick="location.href='/auth/register_fingerprint'">
