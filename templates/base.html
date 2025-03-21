@@ -1,27 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-gray-50">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Student Check-in System{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#1D4ED8', // Blue-700
+                        'primary-light': '#3B82F6', // Blue-500
+                        'primary-dark': '#1E40AF', // Blue-800
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Additional styles -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body>
-    <header>
-        <nav>
-            <div class="logo">
-                <a href="/">Student Check-in</a>
+<body class="h-full">
+    <!-- Admin Header -->
+    <header class="bg-white border-b border-gray-200">
+        <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <a href="{{ url_for('admin.admin_dashboard') }}" class="text-2xl font-bold text-blue-600">CheckIn</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-gray-500">Admin Panel</span>
+                    <form action="{{ url_for('admin.admin_logout') }}" method="GET" class="ml-4">
+                        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                            Logout
+                        </button>
+                    </form>
+                </div>
             </div>
-            <ul class="nav-links">
-                <li><a href="/">Home</a></li>
-                <li><a href="/scan">Scan</a></li>
-                <li><a href="/register">Register</a></li>
-            </ul>
-        </nav>
+        </div>
     </header>
 
-    <main>
+    <!-- Main Content -->
+    <main class="flex-1">
         {% block content %}{% endblock %}
     </main>
 
@@ -29,7 +61,12 @@
         <p>&copy; {{ now.year }} Student Check-in System. All rights reserved.</p>
     </footer>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Base Scripts -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize any components that need JavaScript
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html> 

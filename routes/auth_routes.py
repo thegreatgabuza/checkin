@@ -1,29 +1,37 @@
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, current_app
 import firebase_admin
 from firebase_admin import firestore
 import json
 import os
 
 auth_blueprint = Blueprint('auth', __name__, url_prefix='/auth')
-db = firestore.client()
+
+def get_db():
+    """Get the Firestore database instance"""
+    return current_app.config['db']
 
 @auth_blueprint.route('/register_manual', methods=['GET', 'POST'])
 def register_manual():
     if request.method == 'POST':
         try:
-            data = request.form.to_dict()
-            # Save user data to Firebase
-            db.collection('users').add({
+            db = get_db()
+            data = request.form
+            
+            # Create user document
+            user_ref = db.collection('users').document()
+            user_ref.set({
                 'first_name': data.get('first_name'),
                 'last_name': data.get('last_name'),
                 'email': data.get('email'),
                 'student_id': data.get('student_id'),
-                'registration_method': 'manual',
+                'registration_methods': ['manual'],
                 'timestamp': firestore.SERVER_TIMESTAMP
             })
-            return jsonify({"status": "success", "message": "User registered successfully"})
+            
+            return jsonify({"success": True, "message": "Registration successful"})
         except Exception as e:
-            return jsonify({"status": "error", "message": str(e)})
+            return jsonify({"error": str(e)}), 500
+            
     return render_template('register_manual.html')
 
 @auth_blueprint.route('/check_student_id', methods=['POST'])
@@ -36,7 +44,7 @@ def check_student_id():
             return jsonify({"status": "error", "message": "Invalid Student ID"})
 
         # Check if student already exists in Firestore
-        user_ref = db.collection('users').document(student_id).get()
+        user_ref = get_db().collection('users').document(student_id).get()
         if user_ref.exists:
             return jsonify({"status": "exists", "message": "Student already registered"})
 
@@ -57,7 +65,7 @@ def register_barcode():
                 return jsonify({"status": "error", "message": "Invalid Student ID"})
 
             # Check if student already exists
-            user_ref = db.collection('users').document(student_id).get()
+            user_ref = get_db().collection('users').document(student_id).get()
             if user_ref.exists:
                 return jsonify({"status": "exists", "message": "Student already registered"})
 
@@ -69,12 +77,13 @@ def register_barcode():
                 return jsonify({"status": "need_more_info", "message": "Please provide first name and last name."})
 
             # Save new student to Firestore
-            db.collection('users').document(student_id).set({
+            user_ref = get_db().collection('users').document(student_id)
+            user_ref.set({
                 'first_name': first_name,
                 'last_name': last_name,
                 'email': f"{student_id}@dut4life.ac.za",
                 'student_id': student_id,
-                'registration_method': 'barcode',
+                'registration_methods': ['barcode'],
                 'timestamp': firestore.SERVER_TIMESTAMP
             })
             print(f"Saving student {student_id} to Firestore")
@@ -89,26 +98,30 @@ def register_barcode():
 def register_face():
     if request.method == 'POST':
         try:
-            # Process facial recognition data
-            user_data = request.form.to_dict()
-            face_image = request.files.get('face_image')
+            db = get_db()
+            data = request.form
+            face_data = request.files.get('face_image')
             
-            # Save user data to Firebase
-            user_ref = db.collection('users').add({
-                'first_name': user_data.get('first_name'),
-                'last_name': user_data.get('last_name'),
-                'email': user_data.get('email'),
-                'student_id': user_data.get('student_id'),
-                'registration_method': 'facial',
+            if not face_data:
+                return jsonify({"error": "No face image provided"}), 400
+                
+            # TODO: Process face image with LandingAI
+            # For now, just store user data
+            user_ref = db.collection('users').document()
+            user_ref.set({
+                'first_name': data.get('first_name'),
+                'last_name': data.get('last_name'),
+                'email': data.get('email'),
+                'student_id': data.get('student_id'),
+                'registration_methods': ['facial'],
+                'face_data': 'placeholder',  # Replace with actual face encoding
                 'timestamp': firestore.SERVER_TIMESTAMP
             })
             
-            # LandingAI integration will go here
-            # This is a placeholder for the actual implementation
-            
-            return jsonify({"status": "success", "message": "Face registered successfully"})
+            return jsonify({"success": True, "message": "Face registration successful"})
         except Exception as e:
-            return jsonify({"status": "error", "message": str(e)})
+            return jsonify({"error": str(e)}), 500
+            
     return render_template('register_face.html')
 
 @auth_blueprint.route('/register_fingerprint', methods=['GET', 'POST'])
@@ -119,12 +132,12 @@ def register_fingerprint():
             user_data = request.form.to_dict()
             
             # Save user data to Firebase
-            db.collection('users').add({
+            get_db().collection('users').add({
                 'first_name': user_data.get('first_name'),
                 'last_name': user_data.get('last_name'),
                 'email': user_data.get('email'),
                 'student_id': user_data.get('student_id'),
-                'registration_method': 'fingerprint',
+                'registration_methods': ['fingerprint'],
                 'timestamp': firestore.SERVER_TIMESTAMP
             })
             
@@ -142,13 +155,13 @@ def register_rfid():
             rfid_code = user_data.get('rfid_code')
             
             # Save user data to Firebase
-            db.collection('users').add({
+            get_db().collection('users').add({
                 'first_name': user_data.get('first_name'),
                 'last_name': user_data.get('last_name'),
                 'email': user_data.get('email'),
                 'student_id': user_data.get('student_id'),
                 'rfid_code': rfid_code,
-                'registration_method': 'rfid',
+                'registration_methods': ['rfid'],
                 'timestamp': firestore.SERVER_TIMESTAMP
             })
             
@@ -166,12 +179,12 @@ def register_voice():
             voice_sample = request.files.get('voice_sample')
             
             # Save user data to Firebase
-            db.collection('users').add({
+            get_db().collection('users').add({
                 'first_name': user_data.get('first_name'),
                 'last_name': user_data.get('last_name'),
                 'email': user_data.get('email'),
                 'student_id': user_data.get('student_id'),
-                'registration_method': 'voice',
+                'registration_methods': ['voice'],
                 'timestamp': firestore.SERVER_TIMESTAMP
             })
             
