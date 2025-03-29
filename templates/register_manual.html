@@ -210,10 +210,8 @@
             inputs.forEach(input => {
                 if (!input.value.trim()) {
                     isValid = false;
-                    // Add error styling
                     input.style.borderColor = '#ff8a80';
                     
-                    // Add error message if it doesn't exist
                     let errorMessage = input.nextElementSibling;
                     if (!errorMessage || !errorMessage.classList.contains('error-message')) {
                         errorMessage = document.createElement('div');
@@ -222,10 +220,8 @@
                         input.parentNode.insertBefore(errorMessage, input.nextSibling);
                     }
                 } else {
-                    // Remove error styling
                     input.style.borderColor = '';
                     
-                    // Remove error message if exists
                     const errorMessage = input.nextElementSibling;
                     if (errorMessage && errorMessage.classList.contains('error-message')) {
                         errorMessage.remove();
@@ -237,63 +233,50 @@
                 return;
             }
             
-            // In a real application, you would send this data to your server
-            // For demo purposes, we'll simulate a successful registration
-            
             // Collect form data
             const formData = new FormData(form);
             const userData = Object.fromEntries(formData.entries());
             
-            // Simulate API call
             try {
-                // This would be a fetch call to your API endpoint in a real app
-                /*
-                const response = await fetch('/auth/register_manual', {
+                // First check if student ID is valid
+                const checkResponse = await fetch('/auth/check_student_id', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(userData)
+                    body: JSON.stringify({ student_id: userData.student_id })
+                });
+                
+                const checkResult = await checkResponse.json();
+                
+                if (checkResult.status === 'exists') {
+                    alert('This student ID is already registered.');
+                    return;
+                }
+                
+                // If student ID is valid, proceed with registration
+                const response = await fetch('/auth/register_manual', {
+                    method: 'POST',
+                    body: formData
                 });
                 
                 const result = await response.json();
                 
-                if (result.status !== 'success') {
-                    throw new Error(result.message || 'Registration failed');
-                }
-                */
-                
-                // For demo purposes, we'll just simulate success after a delay
-                setTimeout(() => {
-                    // Update steps
-                    steps[0].classList.remove('active');
-                    steps[1].classList.add('active');
-                    
+                if (result.success) {
                     // Show success message
                     registrationForm.style.display = 'none';
                     successMessage.style.display = 'block';
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Error registering:', error);
-                alert('Registration failed: ' + error.message);
-            }
-        });
-        
-        // Add input event listeners to clear errors as user types
-        const inputs = form.querySelectorAll('input');
-        
-        inputs.forEach(input => {
-            input.addEventListener('input', function() {
-                // Remove error styling
-                input.style.borderColor = '';
-                
-                // Remove error message if exists
-                const errorMessage = input.nextElementSibling;
-                if (errorMessage && errorMessage.classList.contains('error-message')) {
-                    errorMessage.remove();
+                    
+                    // Update steps
+                    steps[0].classList.remove('active');
+                    steps[1].classList.add('active');
+                } else {
+                    alert('Registration failed: ' + (result.error || 'Unknown error'));
                 }
-            });
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred during registration. Please try again.');
+            }
         });
     });
 </script>

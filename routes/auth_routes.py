@@ -3,6 +3,7 @@ import firebase_admin
 from firebase_admin import firestore
 import json
 import os
+from datetime import datetime
 
 auth_blueprint = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -17,20 +18,54 @@ def register_manual():
             db = get_db()
             data = request.form
             
+            # Validate required fields
+            required_fields = ['first_name', 'last_name', 'email', 'student_id', 'date_of_birth']
+            for field in required_fields:
+                if not data.get(field):
+                    return jsonify({"success": False, "error": f"Missing required field: {field}"}), 400
+            
+            # Check if student ID already exists
+            student_id = data.get('student_id')
+            existing_user = db.collection('users').where('student_id', '==', student_id).limit(1).get()
+            if existing_user:
+                return jsonify({"success": False, "error": "Student ID already registered"}), 400
+            
             # Create user document
-            user_ref = db.collection('users').document()
-            user_ref.set({
+            user_data = {
                 'first_name': data.get('first_name'),
                 'last_name': data.get('last_name'),
                 'email': data.get('email'),
-                'student_id': data.get('student_id'),
+                'student_id': student_id,
+                'date_of_birth': data.get('date_of_birth'),
                 'registration_methods': ['manual'],
-                'timestamp': firestore.SERVER_TIMESTAMP
+                'created_at': firestore.SERVER_TIMESTAMP,
+                'updated_at': firestore.SERVER_TIMESTAMP
+            }
+            
+            # Add to users collection
+            user_ref = db.collection('users').document()
+            user_ref.set(user_data)
+            
+            # Create a check-in record for the user
+            check_in_data = {
+                'user_id': user_ref.id,
+                'student_id': student_id,
+                'check_in_time': firestore.SERVER_TIMESTAMP,
+                'method': 'manual',
+                'status': 'success'
+            }
+            
+            db.collection('check_ins').add(check_in_data)
+            
+            return jsonify({
+                "success": True,
+                "message": "Registration successful",
+                "user_id": user_ref.id
             })
             
-            return jsonify({"success": True, "message": "Registration successful"})
         except Exception as e:
-            return jsonify({"error": str(e)}), 500
+            print(f"Registration error: {str(e)}")
+            return jsonify({"success": False, "error": str(e)}), 500
             
     return render_template('register_manual.html')
 
