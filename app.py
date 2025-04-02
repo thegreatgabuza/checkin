@@ -1,13 +1,18 @@
 import os
+import time
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from dotenv import load_dotenv
 import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime
 from jinja2 import ChoiceLoader, FileSystemLoader
+import serial
 
 # Load environment variables
 load_dotenv()
+
+serial_port = os.getenv("SERIAL_PORT")
+baud_rate = os.getenv("BAUD_RATE")
 
 # Initialize Firebase and Firestore (Only Once)
 db = None
@@ -66,5 +71,25 @@ def register():
 def health_check():
     return jsonify({"status": "healthy", "firebase": "connected" if db else "disconnected"})
 
+@app.route('/trigger_read', methods=['POST'])
+def trigger_read():
+
+    arduino = serial.Serial('COM10', 9600) 
+    time.sleep(2) 
+
+    if not arduino.isOpen():
+        return jsonify({"error": "Serial port is not open."})
+
+    while True:
+        if arduino.in_waiting > 0:
+            data = arduino.readline().decode('utf-8').strip()
+            received_data = f"Received: {data}"
+
+            print(received_data)
+
+            if data.startswith("UID:"):
+                arduino.close()
+                return jsonify(data)
+  
 if __name__ == '__main__':
     app.run(debug=True)

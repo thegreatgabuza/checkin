@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+
+{% block title %}RFID Card Registration{% endblock %}
+
+{% block extra_css %}
+<style>
+     body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #1a73e8;
+        font-family: Arial, sans-serif;
+    }
+    
+    .animated-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background: linear-gradient(45deg, #0d47a1, #2196f3, #4fc3f7, #0d47a1);
+        background-size: 400% 400%;
+        animation: gradient 15s ease infinite;
+    }
+    
+    @keyframes gradient {
+        0% {background-position: 0% 50%;}
+        50% {background-position: 100% 50%;}
+        100% {background-position: 0% 50%;}
+    }
+    
+    .register-container {
+        max-width: 600px;
+        width: 90%;
+        margin: 30px auto;
+        padding: 30px;
+        background-color: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    h1 {
+        text-align: center;
+        margin-bottom: 20px;
+        font-weight: 700;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    
+    .form-container {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+    }
+    
+    input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        font-size: 1rem;
+        box-sizing: border-box;
+        transition: all 0.3s ease;
+    }
+    
+    input:focus {
+        outline: none;
+        border-color: rgba(255, 255, 255, 0.5);
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+    }
+    
+    input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    button {
+        display: block;
+        width: 100%;
+        padding: 14px;
+        margin-top: 20px;
+        background-color: #4285f4;
+        border: none;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    
+    button:hover {
+        background-color: #5c9aff;
+        transform: translateY(-2px);
+    }
+    
+    button:active {
+        transform: translateY(0);
+    }
+    
+    .user-details {
+        display: none;
+    }
+
+    .message-box {
+        display: none;
+        text-align: center;
+        font-weight: bold;
+        margin: 15px 0;
+        padding: 12px;
+        border-radius: 5px;
+        animation: fadeIn 0.5s;
+    }
+    
+    @keyframes fadeIn {
+        from {opacity: 0;}
+        to {opacity: 1;}
+    }
+
+    .error {
+        background-color: rgba(255, 76, 76, 0.8);
+        color: white;
+    }
+    
+    .success {
+        background-color: rgba(40, 167, 69, 0.8);
+        color: white;
+    }
+    
+    .info {
+        background-color: rgba(0, 123, 255, 0.8);
+        color: white;
+    }
+    
+    .scanning-animation {
+        text-align: center;
+        margin: 30px 0;
+    }
+    
+    .pulse {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 3px solid white;
+        margin: 0 auto 20px;
+        position: relative;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 40px rgba(255, 255, 255, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+        }
+    }
+    
+    .card-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+    }
+    
+    .back-button {
+        background-color: transparent;
+        border: 1px solid white;
+        margin-top: 10px;
+    }
+    
+    .back-button:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    @media (max-width: 768px) {
+        .register-container {
+            width: 85%;
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="animated-background"></div>
+
+<div class="register-container">
+    <h1>RFID Card Registration</h1>
+    
+    <div id="message" class="message-box"></div>
+    
+    <!-- RFID Scanning Phase -->
+    <div id="rfid-scan-phase">
+        <p style="text-align: center;">Please tap your RFID card on the reader to begin registration.</p>
+        
+        <div class="scanning-animation">
+            <div class="pulse"></div>
+            <div class="card-icon">💳</div>
+            <p>Waiting for card...</p>
+        </div>
+        
+        <button class="back-button" onclick="location.href='/'">Back to Home</button>
+    </div>
+    
+    <!-- User Details Phase -->
+    <div id="user-details-phase" class="user-details">
+        <p style="text-align: center;">Card detected! Please complete your registration by providing the following details:</p>
+        
+        <div class="form-container">
+            <form id="registration-form">
+                <div class="form-group">
+                    <label for="rfid-value">RFID Card ID</label>
+                    <input type="text" id="rfid-value" name="rfid_value" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label for="student-number">Student Number</label>
+                    <input type="text" id="student-number" name="student_number" maxlength="8" 
+                           placeholder="Enter your student number" required pattern="^2\d{7}$">
+                    <small style="color: rgba(255,255,255,0.7); display: block; margin-top: 5px;">
+                        Must start with 2 and be 8 digits long
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="first-name">First Name</label>
+                    <input type="text" id="first-name" name="first_name" placeholder="Enter your first name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="last-name">Last Name</label>
+                    <input type="text" id="last-name" name="last_name" placeholder="Enter your last name" required>
+                </div>
+                
+                <button type="submit">Complete Registration</button>
+                <button type="button" class="back-button" id="cancel-button">Cancel</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Function to show messages
+    function showMessage(message, type) {
+        const messageBox = document.getElementById('message');
+        messageBox.textContent = message;
+        messageBox.className = `message-box ${type}`;
+        messageBox.style.display = 'block';
+        
+        if (type !== 'info') {
+            setTimeout(() => { messageBox.style.display = 'none'; }, 5000);
+        }
+    }
+    
+    // Mock RFID detection (in a real app, this would connect to the RFID reader)
+    function triggerRead() {
+            
+        }
+
+    function listenForRFID() {
+        showMessage("System is waiting for an RFID card...", "info");
+        
+        fetch('/trigger_read', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    rfidDetected(data);
+                });
+        // ---------------------------------------------------------
+    }
+    
+    // Function to handle when an RFID card is detected
+    function rfidDetected(rfidValue) {
+        document.getElementById('message').style.display = 'none';
+        document.getElementById('rfid-scan-phase').style.display = 'none';
+        document.getElementById('user-details-phase').style.display = 'block';
+        document.getElementById('rfid-value').value = rfidValue;
+        
+        showMessage(`Card detected! ID: ${rfidValue}`, "success");
+    }
+    
+    // Initialize RFID listening when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        listenForRFID();
+        
+        // Handle form submission
+        document.getElementById('registration-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const studentNumber = document.getElementById('student-number').value;
+            const firstName = document.getElementById('first-name').value;
+            const lastName = document.getElementById('last-name').value;
+            const rfidValue = document.getElementById('rfid-value').value;
+            
+            // Basic validation
+            if (!/^2\d{7}$/.test(studentNumber)) {
+                showMessage("Student number must start with 2 and be 8 digits long", "error");
+                return;
+            }
+            
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('student_number', studentNumber);
+            formData.append('first_name', firstName);
+            formData.append('last_name', lastName);
+            formData.append('rfid_value', rfidValue);
+            
+            // In a real implementation, this would send data to the server
+            // For this demo, we'll simulate a successful registration
+            
+            // SAMPLE CODE - Replace with actual server submission
+            // ---------------------------------------------------------
+            
+            showMessage("Processing registration...", "info");
+            
+            // Simulate server processing
+            setTimeout(() => {
+                showMessage("Registration successful! Your RFID card has been linked to your account.", "success");
+                
+                // Redirect back to home after 2 seconds
+                setTimeout(() => {
+                    location.href = '/';
+                }, 2000);
+            }, 1500);
+            
+            // ---------------------------------------------------------
+        });
+        
+        // Handle cancel button
+        document.getElementById('cancel-button').addEventListener('click', function() {
+            document.getElementById('user-details-phase').style.display = 'none';
+            document.getElementById('rfid-scan-phase').style.display = 'block';
+            document.getElementById('registration-form').reset();
+            listenForRFID();
+        });
+    });
+</script>
+{% endblock %}
